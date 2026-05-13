@@ -1,4 +1,4 @@
-# AI Guide
+# AI Tour Guide
 
 AI Guide is a React Native application built with Expo. The mobile app captures a landmark photo with GPS context, then sends the scan to a Supabase Edge Function for secure backend analysis.
 
@@ -89,22 +89,44 @@ Install dependencies once the Expo app is scaffolded:
 npm install
 ```
 
-Start the Expo development server:
+Start Expo:
 
 ```bash
 npm run start
 ```
 
-Common Expo targets:
+Run TypeScript checks:
 
 ```bash
-npm run ios
-npm run android
-npm run web
+npm run typecheck
 ```
 
 ## Project Structure
 
+```text
+src/
+  app/                         Expo Router route files
+    _layout.tsx                Shared navigation stack and status bar
+    index.tsx                  Home screen
+    onboarding.tsx             Product onboarding
+    camera-scan.tsx            Camera scan entry point
+    result.tsx                 Landmark result screen
+    nearby.tsx                 Nearby landmark discovery
+    ask-guide.tsx              AI guide question screen
+  components/
+    ui/                        Reusable typed UI primitives
+  features/
+    ai-guide/                  AI guide feature boundary
+    camera/                    Camera scanning feature boundary
+    landmarks/                 Landmark data and services
+    location/                  Location feature boundary
+  lib/
+    config/                    Runtime configuration
+    constants/                 Shared constants such as routes
+    logger/                    Safe logging abstraction
+    services/                  Framework-independent shared services
+  styles/                      NativeWind global stylesheet
+  types/                       Domain and API result types
 A typical Expo structure for this project should look like:
 
 ```text
@@ -124,9 +146,9 @@ app.json
 tsconfig.json
 ```
 
-Prefer Expo Router for navigation unless the project later chooses a different routing approach.
+## Architecture Notes
 
-## Development Notes
+The app follows a clean, feature-based architecture. Route files compose reusable UI and feature services, while business logic belongs in `features/*`, `hooks`, or `lib/services` as the app grows. Shared domain models live in `src/types` so API contracts and screens can use the same strongly typed language.
 
 - Keep screens small and compose them from reusable components.
 - Put shared UI in `components/`.
@@ -137,12 +159,11 @@ Prefer Expo Router for navigation unless the project later chooses a different r
 
 ## Useful Commands
 
-After the project is scaffolded, keep these commands available in `package.json`:
-
 ```bash
 npm run start
-npm run lint
-npm run test
+npm run ios
+npm run android
+npm run web
 npm run typecheck
 ```
 
