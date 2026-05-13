@@ -1,13 +1,13 @@
-# AI Guide
+# AI Tour Guide
 
-AI Guide is a new React Native application built with Expo.
+AI Tour Guide is an Expo React Native TypeScript application scaffolded for a privacy-conscious landmark scanning and AI guide experience.
 
 ## Tech Stack
 
-- React Native
-- Expo
-- TypeScript
-- Node.js
+- Expo + React Native
+- Expo Router with routes under `src/app`
+- TypeScript in strict mode
+- NativeWind for utility-first React Native styling
 
 ## Getting Started
 
@@ -17,58 +17,58 @@ Install dependencies:
 npm install
 ```
 
-Start the Expo development server:
+Start Expo:
 
 ```bash
 npm run start
 ```
 
-Common Expo targets:
+Run TypeScript checks:
 
 ```bash
-npm run ios
-npm run android
-npm run web
+npm run typecheck
 ```
 
 ## Project Structure
 
-The app has not been scaffolded yet. A typical Expo structure for this project should look like:
-
 ```text
-app/
-  _layout.tsx
-  index.tsx
-assets/
-components/
-constants/
-hooks/
-package.json
-app.json
-tsconfig.json
+src/
+  app/                         Expo Router route files
+    _layout.tsx                Shared navigation stack and status bar
+    index.tsx                  Home screen
+    onboarding.tsx             Product onboarding
+    camera-scan.tsx            Camera scan entry point
+    result.tsx                 Landmark result screen
+    nearby.tsx                 Nearby landmark discovery
+    ask-guide.tsx              AI guide question screen
+  components/
+    ui/                        Reusable typed UI primitives
+  features/
+    ai-guide/                  AI guide feature boundary
+    camera/                    Camera scanning feature boundary
+    landmarks/                 Landmark data and services
+    location/                  Location feature boundary
+  lib/
+    config/                    Runtime configuration
+    constants/                 Shared constants such as routes
+    logger/                    Safe logging abstraction
+    services/                  Framework-independent shared services
+  styles/                      NativeWind global stylesheet
+  types/                       Domain and API result types
 ```
 
-Prefer Expo Router for navigation unless the project later chooses a different routing approach.
+## Architecture Notes
 
-## Development Notes
+The app follows a clean, feature-based architecture. Route files compose reusable UI and feature services, while business logic belongs in `features/*`, `hooks`, or `lib/services` as the app grows. Shared domain models live in `src/types` so API contracts and screens can use the same strongly typed language.
 
-- Keep screens small and compose them from reusable components.
-- Put shared UI in `components/`.
-- Put route-level screens in `app/` when using Expo Router.
-- Keep API/client logic outside UI components when it grows beyond simple calls.
-- Use TypeScript for new files.
+AI provider secrets must never be embedded in the mobile app. Any OpenAI or other AI provider call should be made by a backend service that performs authentication, rate limiting, prompt management, retrieval, response validation, and safe error mapping before returning data to the client.
 
 ## Useful Commands
 
-After the project is scaffolded, keep these commands available in `package.json`:
-
 ```bash
 npm run start
-npm run lint
-npm run test
+npm run ios
+npm run android
+npm run web
 npm run typecheck
 ```
-
-## Status
-
-Initial repository setup.
