@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "AI Guide",
+    "slug": "ai-guide",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "aiguide",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "AI Guide uses your camera to scan what you are seeing.",
+        "NSLocationWhenInUseUsageDescription": "AI Guide uses your location to tailor tour guide context to your surroundings."
+      }
+    },
+    "android": {
+      "permissions": ["CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "AI Guide uses your camera to scan what you are seeing."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "AI Guide uses your location to tailor tour guide context to your surroundings."
+        }
+      ]
+    ]
+  }
+}

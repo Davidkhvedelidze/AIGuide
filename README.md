@@ -1,11 +1,14 @@
 # AI Guide
 
-AI Guide is a new React Native application built with Expo.
+AI Guide is a React Native application built with Expo. The current MVP implements a local camera-to-result flow without a backend, OpenAI, API keys, or Supabase.
 
 ## Tech Stack
 
 - React Native
 - Expo
+- Expo Router
+- Expo Camera
+- Expo Location
 - TypeScript
 - Node.js
 
@@ -31,44 +34,67 @@ npm run android
 npm run web
 ```
 
+## MVP Scan Mock Flow
+
+The first working MVP flow is fully local:
+
+1. The user opens the Home screen at `src/app/index.tsx`.
+2. The user taps **Scan what I’m seeing**.
+3. Expo Router navigates to `src/app/camera-scan.tsx`.
+4. The camera screen requests camera permission through `useCameraPermission`.
+5. The camera screen requests foreground location permission through `useCurrentLocation`.
+6. The user captures a photo with Expo Camera.
+7. The app reads the current latitude and longitude with Expo Location.
+8. `createMockAiGuideResult` builds a typed local `AiGuideResult`.
+9. Expo Router navigates to `src/app/result.tsx`, which validates and displays the result.
+
+This flow intentionally does **not** call OpenAI, a backend API, Supabase, or any external service. It passes an encoded mock result between routes so the app can validate navigation, permissions, loading states, denied-permission states, and scan error states before real AI integration is added.
+
 ## Project Structure
 
-The app has not been scaffolded yet. A typical Expo structure for this project should look like:
-
 ```text
-app/
-  _layout.tsx
-  index.tsx
-assets/
-components/
-constants/
-hooks/
-package.json
-app.json
-tsconfig.json
+src/
+  app/
+    _layout.tsx
+    index.tsx
+    camera-scan.tsx
+    result.tsx
+  components/
+    ui/
+      AppButton.tsx
+      AppCard.tsx
+      AppText.tsx
+      ErrorState.tsx
+      LoadingState.tsx
+  features/
+    camera/
+      hooks/
+        useCameraPermission.ts
+        useCameraScan.ts
+    guide/
+      services/
+        createMockAiGuideResult.ts
+      types/
+        AiGuideResult.ts
+    location/
+      hooks/
+        useCurrentLocation.ts
+  lib/
+    theme/
+      tokens.ts
 ```
-
-Prefer Expo Router for navigation unless the project later chooses a different routing approach.
 
 ## Development Notes
 
-- Keep screens small and compose them from reusable components.
-- Put shared UI in `components/`.
-- Put route-level screens in `app/` when using Expo Router.
-- Keep API/client logic outside UI components when it grows beyond simple calls.
-- Use TypeScript for new files.
+- Keep route files in `src/app/` and use Expo Router for navigation.
+- Keep UI reusable primitives in `src/components/ui/`.
+- Keep business logic in feature hooks and services instead of route components.
+- Keep AI calls behind a backend when introduced later; do not place model API keys in the mobile app.
+- Use Expo-managed APIs before adding native modules.
 
 ## Useful Commands
 
-After the project is scaffolded, keep these commands available in `package.json`:
-
 ```bash
 npm run start
-npm run lint
-npm run test
 npm run typecheck
 ```
-
-## Status
-
-Initial repository setup.
