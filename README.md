@@ -1,13 +1,14 @@
-# AI Guide
+# AI Tour Guide
 
-AI Guide is a new React Native application built with Expo.
+AI Tour Guide is an Expo React Native application scaffolded with TypeScript, Expo Router, and NativeWind. The architecture is intentionally feature-based so camera scanning, location lookup, landmark data, and AI guide workflows can evolve independently.
 
 ## Tech Stack
 
-- React Native
-- Expo
-- TypeScript
-- Node.js
+- Expo + React Native
+- TypeScript in strict mode
+- Expo Router for file-based navigation
+- NativeWind for mobile-first utility styling
+- Expo-managed camera and location packages for future permission-aware features
 
 ## Getting Started
 
@@ -23,7 +24,7 @@ Start the Expo development server:
 npm run start
 ```
 
-Common Expo targets:
+Common targets:
 
 ```bash
 npm run ios
@@ -31,44 +32,52 @@ npm run android
 npm run web
 ```
 
-## Project Structure
-
-The app has not been scaffolded yet. A typical Expo structure for this project should look like:
-
-```text
-app/
-  _layout.tsx
-  index.tsx
-assets/
-components/
-constants/
-hooks/
-package.json
-app.json
-tsconfig.json
-```
-
-Prefer Expo Router for navigation unless the project later chooses a different routing approach.
-
-## Development Notes
-
-- Keep screens small and compose them from reusable components.
-- Put shared UI in `components/`.
-- Put route-level screens in `app/` when using Expo Router.
-- Keep API/client logic outside UI components when it grows beyond simple calls.
-- Use TypeScript for new files.
-
-## Useful Commands
-
-After the project is scaffolded, keep these commands available in `package.json`:
+Run TypeScript checks:
 
 ```bash
-npm run start
-npm run lint
-npm run test
 npm run typecheck
 ```
 
-## Status
+## Project Structure
 
-Initial repository setup.
+```text
+src/
+  app/                    Expo Router routes and root layout
+  components/
+    layout/               Shared screen layout primitives
+    ui/                   Reusable typed UI components
+  features/
+    ai-guide/             AI guide feature boundary
+    camera/               Camera scan feature boundary
+    landmarks/            Landmark domain feature boundary
+    location/             Location and nearby search boundary
+  lib/
+    constants/            Shared constants and route names
+    logger/               Centralized app logging
+    services/             Framework-independent services such as HTTP
+  styles/                 NativeWind global styles
+  types/                  Shared domain models
+```
+
+## Routes
+
+The initial route set lives in `src/app`:
+
+- `/` home
+- `/onboarding`
+- `/camera-scan`
+- `/result`
+- `/nearby`
+- `/ask-guide`
+
+## Security Notes
+
+Do not add OpenAI or other AI provider API keys to the mobile app. AI requests that require secrets should go through a backend service that validates input, retrieves trusted landmark context, calls AI providers, validates responses, and returns safe user-facing results.
+
+## Architecture Notes
+
+- Screens compose UI components and avoid heavy business logic.
+- Reusable UI lives under `src/components`.
+- Feature folders provide clear boundaries for future hooks, services, API clients, and screen-specific components.
+- Shared domain models live in `src/types` and are re-exported from feature type modules when useful.
+- Network calls should use `src/lib/services/http.ts` instead of direct `fetch` calls in UI components.

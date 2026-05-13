@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "AI Tour Guide",
+    "slug": "ai-tour-guide",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "aitourguide",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aiguide.tourguide",
+      "infoPlist": {
+        "NSCameraUsageDescription": "AI Tour Guide uses the camera to scan landmarks and provide contextual guidance.",
+        "NSLocationWhenInUseUsageDescription": "AI Tour Guide uses your location to suggest nearby landmarks."
+      }
+    },
+    "android": {
+      "package": "com.aiguide.tourguide",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow AI Tour Guide to scan landmarks with your camera."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow AI Tour Guide to find landmarks near you."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
