@@ -24,7 +24,7 @@ export default function HomeScreen() {
               <AppButton title="Scan what I’m seeing" />
             </Link>
             <Link asChild href="/nearby">
-              <AppButton title="Find nearby places" variant="secondary" />
+              <AppButton title="Places near me" variant="secondary" />
             </Link>
             <Link asChild href="/onboarding">
               <AppButton title="How it works" variant="ghost" />

@@ -1,4 +1,16 @@
-export type LandmarkCategory = 'monument' | 'museum' | 'architecture' | 'park' | 'historic_site' | 'religious_site' | 'other';
+export type LandmarkCategory =
+  | 'historical'
+  | 'church'
+  | 'viewpoint'
+  | 'museum'
+  | 'food'
+  | 'nature'
+  | 'monument'
+  | 'architecture'
+  | 'park'
+  | 'historic_site'
+  | 'religious_site'
+  | 'other';
 
 export interface GeoCoordinates {
   latitude: number;
@@ -16,14 +28,32 @@ export interface LandmarkTranslation {
 
 export interface Landmark {
   id: string;
-  canonicalName: string;
+  slug: string;
+  name: string;
+  city: string;
+  region: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
   category: LandmarkCategory;
-  coordinates: GeoCoordinates;
-  countryCode: string;
-  city?: string;
-  confidenceScore?: number;
-  imageUrl?: string;
-  translations: LandmarkTranslation[];
+  shortDescription: string;
+  fullStory: string;
+  interestingFacts: string[];
+  historicalContext: string;
+  bestTimeToVisit: string;
+  averageVisitDuration: string;
+  nearbyPlaceIds: string[];
+  recommendedNextPlaceIds: string[];
+  imageUrls: string[];
+  referenceImageUrls: string[];
+  languages: string[];
   createdAt: string;
   updatedAt: string;
+  canonicalName?: string;
+  coordinates?: GeoCoordinates;
+  countryCode?: string;
+  confidenceScore?: number;
+  imageUrl?: string;
+  translations?: LandmarkTranslation[];
 }
