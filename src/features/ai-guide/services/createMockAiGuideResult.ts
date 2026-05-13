@@ -2,35 +2,24 @@ import type { AiGuideResult, GeoCoordinates } from '@/types';
 
 interface CreateMockAiGuideResultParams {
   coordinates: GeoCoordinates;
-  photoUri?: string;
-  generatedAt?: string;
 }
 
-export function createMockAiGuideResult({ coordinates, photoUri, generatedAt = new Date().toISOString() }: CreateMockAiGuideResultParams): AiGuideResult {
+export function createMockAiGuideResult({ coordinates }: CreateMockAiGuideResultParams): AiGuideResult {
   return {
-    id: `mock-scan-${Date.now()}`,
-    landmarkId: 'mock-nearby-landmark',
-    title: 'Mock landmark scan result',
-    summary:
-      'This is a local MVP result generated on device after capturing a photo and reading your current location. No backend, AI provider, API key, or Supabase project is connected yet.',
-    highlights: [
-      'Photo capture completed with Expo Camera.',
-      `Current position attached: ${coordinates.latitude.toFixed(5)}, ${coordinates.longitude.toFixed(5)}.`,
-      'Future versions can send this scan to a secure backend for verified landmark identification.',
-    ],
-    recommendedQuestions: [
-      'What is the history of this place?',
-      'What details should I look at first?',
-      'What nearby stop should I visit next?',
-    ],
-    confidence: 'low',
-    citations: [{ label: 'Local mock data — replace with trusted backend sources before production AI responses.' }],
-    generatedAt,
-    scan: {
-      source: 'camera',
-      coordinates,
-      capturedAt: generatedAt,
-      ...(photoUri ? { photoUri } : {}),
+    detectedLandmarkId: null,
+    detectedLandmarkName: null,
+    confidence: 0,
+    isUncertain: true,
+    shortExplanation: `This fallback sample was generated locally for coordinates ${coordinates.latitude.toFixed(5)}, ${coordinates.longitude.toFixed(5)} because no backend scan result was provided.`,
+    localGuideStory: 'Start from the camera scan screen to upload a real photo to the secure Supabase Edge Function and receive the backend mock response.',
+    interestingFacts: ['The production scan contract is already shaped like the future AI response.', 'OpenAI integration is intentionally not connected in this MVP backend flow.'],
+    bestTimeToVisit: 'Try scanning during daylight for the clearest photo and best future recognition quality.',
+    nearbyPlaces: [],
+    followUpSuggestions: ['Scan a landmark nearby', 'Move closer to a known place', 'Try again with a clearer photo'],
+    cta: {
+      title: 'Plan with a local guide',
+      message: 'When you are ready, we can turn this scan into a guided route.',
+      action: 'custom_itinerary',
     },
   };
 }

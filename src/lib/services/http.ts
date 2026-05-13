@@ -22,29 +22,68 @@ interface RequestOptions extends RequestInit {
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 
-export async function requestJson<T>(url: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
+interface ErrorResponseBody {
+  error?: {
+    code?: unknown;
+    message?: unknown;
+  };
+  message?: unknown;
+}
+
+function getErrorMessage(body: unknown): string {
+  if (!body || typeof body !== 'object') {
+    return 'We could not complete the request. Please try again.';
+  }
+
+  const candidate = body as ErrorResponseBody;
+
+  if (typeof candidate.error?.message === 'string') {
+    return candidate.error.message;
+  }
+
+  if (typeof candidate.message === 'string') {
+    return candidate.message;
+  }
+
+  return 'We could not complete the request. Please try again.';
+}
+
+function getErrorCode(body: unknown): string {
+  if (!body || typeof body !== 'object') {
+    return 'HTTP_ERROR';
+  }
+
+  const candidate = body as ErrorResponseBody;
+  return typeof candidate.error?.code === 'string' ? candidate.error.code : 'HTTP_ERROR';
+}
+
+async function readJsonSafely(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+async function executeJsonRequest<T>(url: string, options: RequestOptions): Promise<ApiResult<T>> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
       ...options,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       signal: controller.signal,
     });
 
     if (!response.ok) {
+      const errorBody = await readJsonSafely(response);
       logger.warn('HTTP request failed', { status: response.status, url });
 
       return {
         success: false,
         error: {
-          code: 'HTTP_ERROR',
-          message: 'We could not complete the request. Please try again.',
+          code: getErrorCode(errorBody),
+          message: getErrorMessage(errorBody),
           status: response.status,
         },
       };
@@ -67,4 +106,28 @@ export async function requestJson<T>(url: string, options: RequestOptions = {}):
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+export async function requestJson<T>(url: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
+  return executeJsonRequest<T>(url, {
+    ...options,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+}
+
+export async function requestFormDataJson<T>(url: string, body: FormData, options: RequestOptions = {}): Promise<ApiResult<T>> {
+  return executeJsonRequest<T>(url, {
+    ...options,
+    method: options.method ?? 'POST',
+    body,
+    headers: {
+      Accept: 'application/json',
+      ...options.headers,
+    },
+    timeoutMs: options.timeoutMs ?? 30_000,
+  });
 }

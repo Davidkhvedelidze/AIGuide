@@ -58,7 +58,7 @@ export default function CameraScanScreen() {
       <Text className="text-sm font-semibold uppercase tracking-[3px] text-brand-700">MVP scan flow</Text>
       <Text className="mt-3 text-3xl font-bold text-slate-950">Scan what I’m seeing</Text>
       <Text className="mt-3 text-base leading-7 text-slate-600">
-        Capture a photo, attach your current coordinates, and preview a mock guide result. No AI provider or backend is called.
+        Capture a photo, attach your current coordinates, and send it to the secure scan backend for a mock landmark result. OpenAI is not connected yet.
       </Text>
 
       {isPreparingCamera ? <LoadingState title="Requesting camera access" message="We need camera permission before showing the preview." /> : null}
@@ -87,7 +87,7 @@ export default function CameraScanScreen() {
           </AppCard>
 
           {isPreparingLocation ? (
-            <LoadingState title="Getting current location" message="Please allow foreground location access so the mock result can include latitude and longitude." />
+            <LoadingState title="Getting current location" message="Please allow foreground location access so the backend can search for nearby landmarks." />
           ) : null}
 
           {cameraScan.locationStatus === 'denied' ? (
@@ -103,8 +103,16 @@ export default function CameraScanScreen() {
           ) : null}
 
           <AppButton
-            title={cameraScan.status === 'capturing' ? 'Taking photo…' : cameraScan.status === 'locating' ? 'Attaching location…' : 'Take photo and view result'}
-            accessibilityLabel="Take a scan photo and view the mock AI guide result"
+            title={
+              cameraScan.status === 'capturing'
+                ? 'Taking photo…'
+                : cameraScan.status === 'locating'
+                  ? 'Attaching location…'
+                  : cameraScan.status === 'analyzing'
+                    ? 'Uploading and analyzing…'
+                    : 'Take photo and view result'
+            }
+            accessibilityLabel="Take a scan photo and view the AI guide result"
             disabled={isScanDisabled}
             isLoading={cameraScan.isScanning}
             onPress={handleScan}
