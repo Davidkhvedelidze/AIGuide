@@ -70,6 +70,20 @@ The initial route set lives in `src/app`:
 - `/nearby`
 - `/ask-guide`
 
+
+## Local MVP Scan Flow
+
+The first working scan flow is intentionally local-only:
+
+1. Open `/` and tap **Scan what I’m seeing**.
+2. Expo Router navigates to `/camera-scan`.
+3. The camera screen requests Expo Camera permission and then foreground Expo Location permission.
+4. After both permissions are available, tap **Take photo and view result**.
+5. The app captures a photo with Expo Camera, attaches the current latitude and longitude from Expo Location, creates a local mock `AiGuideResult`, and navigates to `/result`.
+6. The result screen displays the mock guide summary, scan coordinates, photo URI, highlights, suggested questions, and mock citation text.
+
+This flow does **not** call OpenAI, Supabase, or any backend service. The mock result is created in `src/features/ai-guide/services/createMockAiGuideResult.ts` so the future production integration can replace local mock generation with a secure backend call without moving secrets into the mobile app.
+
 ## Security Notes
 
 Do not add OpenAI or other AI provider API keys to the mobile app. AI requests that require secrets should go through a backend service that validates input, retrieves trusted landmark context, calls AI providers, validates responses, and returns safe user-facing results.

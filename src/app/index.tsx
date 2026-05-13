@@ -21,7 +21,7 @@ export default function HomeScreen() {
           <Text className="mt-2 text-sm leading-6 text-slate-600">Use camera and location permissions only when needed. You stay in control.</Text>
           <View className="mt-5 gap-3">
             <Link asChild href="/camera-scan">
-              <AppButton title="Scan a landmark" />
+              <AppButton title="Scan what I’m seeing" />
             </Link>
             <Link asChild href="/nearby">
               <AppButton title="Find nearby places" variant="secondary" />
