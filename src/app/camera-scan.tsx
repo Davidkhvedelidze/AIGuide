@@ -55,10 +55,10 @@ export default function CameraScanScreen() {
 
   return (
     <ScreenContainer contentContainerStyle={{ flexGrow: 1 }}>
-      <Text className="text-sm font-semibold uppercase tracking-[3px] text-brand-700">MVP scan flow</Text>
+      <Text className="text-sm font-semibold uppercase tracking-[3px] text-brand-700">AI Vision scan flow</Text>
       <Text className="mt-3 text-3xl font-bold text-slate-950">Scan what I’m seeing</Text>
       <Text className="mt-3 text-base leading-7 text-slate-600">
-        Capture a photo, attach your current coordinates, and send it to the secure scan backend for a mock landmark result. OpenAI is not connected yet.
+        Capture a photo, attach your current coordinates, and send it to the secure Supabase Edge Function for AI landmark analysis. OpenAI keys never live in the mobile app.
       </Text>
 
       {isPreparingCamera ? <LoadingState title="Requesting camera access" message="We need camera permission before showing the preview." /> : null}

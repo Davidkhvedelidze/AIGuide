@@ -67,7 +67,7 @@ export default function ResultScreen() {
       {!scanResult ? (
         <ErrorState
           title="Showing sample result"
-          message="No backend scan result was passed to this screen. Start from the camera scan flow to upload a real photo and receive the secure mock backend response."
+          message="No backend scan result was passed to this screen. Start from the camera scan flow to upload a real photo and receive the secure AI guide result."
         />
       ) : null}
 
@@ -76,6 +76,15 @@ export default function ResultScreen() {
       </Text>
       <Text className="mt-3 text-3xl font-bold text-slate-950">{result.detectedLandmarkName ?? 'Landmark not detected'}</Text>
       <Text className="mt-4 text-base leading-7 text-slate-600">{result.shortExplanation}</Text>
+
+      {result.isUncertain ? (
+        <AppCard className="mt-5 border border-amber-200 bg-amber-50">
+          <Text className="text-base font-semibold text-amber-950">Uncertain result</Text>
+          <Text className="mt-2 text-sm leading-6 text-amber-900">
+            This scan may need confirmation. Try another angle, move closer to the landmark, or ask a local guide before relying on this match.
+          </Text>
+        </AppCard>
+      ) : null}
 
       <View className="mt-6 gap-4">
         <AppCard>
