@@ -95,3 +95,18 @@ Do not add OpenAI or other AI provider API keys to the mobile app. AI requests t
 - Feature folders provide clear boundaries for future hooks, services, API clients, and screen-specific components.
 - Shared domain models live in `src/types` and are re-exported from feature type modules when useful.
 - Network calls should use `src/lib/services/http.ts` instead of direct `fetch` calls in UI components.
+
+## Nearby Places Mock Flow
+
+The Nearby Places experience is implemented as a local-only flow so the app can validate permissions, distance ranking, filters, and UI states before Supabase is connected.
+
+1. Open `/` and tap **Places near me**.
+2. Expo Router navigates to `/nearby`.
+3. The nearby screen composes feature components and calls `useNearbyLandmarks`.
+4. `useNearbyLandmarks` requests foreground Expo Location permission, reads the current latitude and longitude, compares the user position against local Tbilisi Old Town mock landmarks, filters by category, and sorts results by nearest first.
+5. Distances are calculated with the reusable Haversine utility in `src/features/landmarks/utils/getDistanceMeters.ts` and formatted as meters or kilometers for display.
+6. The screen renders loading, permission denied, error, empty, and result states using shared UI primitives plus feature-specific landmark cards and category filters.
+
+The mock landmark dataset lives in `src/features/landmarks/data/mockLandmarks.ts` and includes Tbilisi Old Town places such as Narikala Fortress, Sulfur Baths, Metekhi Church, Peace Bridge, Rike Park, Mother of Georgia, Sameba Cathedral, Freedom Square, Anchiskhati Basilica, Shardeni Street, Mtatsminda Park, and Leghvtakhevi Waterfall.
+
+This flow does **not** call Supabase, OpenAI, or any backend service. When backend data is ready, the local mock array can be replaced behind the landmark feature boundary while keeping the screen and card components largely unchanged.

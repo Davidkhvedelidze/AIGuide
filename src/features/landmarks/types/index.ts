@@ -1,1 +1,1 @@
-export type { Landmark, LandmarkTranslation } from '@/types';
+export type { Landmark, LandmarkCategory, LandmarkTranslation } from '@/types';
