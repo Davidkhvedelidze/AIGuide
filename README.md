@@ -8,7 +8,8 @@ AI Tour Guide is an Expo React Native application scaffolded with TypeScript, Ex
 - TypeScript in strict mode
 - Expo Router for file-based navigation
 - NativeWind for mobile-first utility styling
-- Expo-managed camera and location packages for future permission-aware features
+- Expo-managed camera and location packages for permission-aware features
+- Supabase for public landmark data, geospatial search, and scan history storage
 
 ## Getting Started
 
@@ -17,6 +18,21 @@ Install dependencies:
 ```bash
 npm install
 ```
+
+Create a local Expo environment file from the example and fill in your Supabase project values:
+
+```bash
+cp .env.example .env
+```
+
+Required public mobile environment variables:
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+Only use the Supabase project URL and anon key in the mobile app. Do not put OpenAI keys, service role keys, or any other backend secrets in Expo public environment variables.
 
 Start the Expo development server:
 
@@ -55,6 +71,8 @@ src/
     constants/            Shared constants and route names
     logger/               Centralized app logging
     services/             Framework-independent services such as HTTP
+    env.ts                Required public environment variable validation
+    supabase.ts           Supabase client configured with public Expo env
   styles/                 NativeWind global styles
   types/                  Shared domain models
 ```
@@ -84,9 +102,25 @@ The first working scan flow is intentionally local-only:
 
 This flow does **not** call OpenAI, Supabase, or any backend service. The mock result is created in `src/features/ai-guide/services/createMockAiGuideResult.ts` so the future production integration can replace local mock generation with a secure backend call without moving secrets into the mobile app.
 
+## Supabase Setup
+
+The database schema, RPC function, indexes, and Tbilisi seed landmarks live in:
+
+```text
+supabase/migrations/20260513143000_create_landmarks.sql
+```
+
+Apply it to your Supabase project with the Supabase CLI:
+
+```bash
+supabase db push
+```
+
+Alternatively, open the SQL file and run it in the Supabase SQL editor for your project. The migration enables PostGIS, creates `landmarks`, `landmark_translations`, and `scan_history`, creates the generated `location` geography column, adds a GIST location index, and exposes the `get_nearby_landmarks(input_lat, input_lng, radius_meters)` RPC.
+
 ## Security Notes
 
-Do not add OpenAI or other AI provider API keys to the mobile app. AI requests that require secrets should go through a backend service that validates input, retrieves trusted landmark context, calls AI providers, validates responses, and returns safe user-facing results.
+Do not add OpenAI or other AI provider API keys to the mobile app. AI requests that require secrets should go through a backend service that validates input, retrieves trusted landmark context, calls AI providers, validates responses, and returns safe user-facing results. Supabase service role keys must also stay server-side and must never be placed in `EXPO_PUBLIC_*` variables.
 
 ## Architecture Notes
 
@@ -96,17 +130,16 @@ Do not add OpenAI or other AI provider API keys to the mobile app. AI requests t
 - Shared domain models live in `src/types` and are re-exported from feature type modules when useful.
 - Network calls should use `src/lib/services/http.ts` instead of direct `fetch` calls in UI components.
 
-## Nearby Places Mock Flow
+## Nearby Places Supabase Flow
 
-The Nearby Places experience is implemented as a local-only flow so the app can validate permissions, distance ranking, filters, and UI states before Supabase is connected.
+The Nearby Places experience now reads public landmark data from Supabase while preserving the original UI states and category filtering.
 
 1. Open `/` and tap **Places near me**.
 2. Expo Router navigates to `/nearby`.
 3. The nearby screen composes feature components and calls `useNearbyLandmarks`.
-4. `useNearbyLandmarks` requests foreground Expo Location permission, reads the current latitude and longitude, compares the user position against local Tbilisi Old Town mock landmarks, filters by category, and sorts results by nearest first.
-5. Distances are calculated with the reusable Haversine utility in `src/features/landmarks/utils/getDistanceMeters.ts` and formatted as meters or kilometers for display.
-6. The screen renders loading, permission denied, error, empty, and result states using shared UI primitives plus feature-specific landmark cards and category filters.
+4. `useNearbyLandmarks` requests foreground Expo Location permission and reads the current latitude and longitude.
+5. The hook calls `getNearbyLandmarks` in `src/features/landmarks/api/landmarkApi.ts`, which invokes the Supabase `get_nearby_landmarks` RPC.
+6. PostGIS calculates `distance_meters` in the database and sorts landmarks by nearest first; the client uses the returned distance for formatting and does not recalculate database distance.
+7. The app applies the existing category filter on the returned result set and renders loading, permission denied, Supabase error, empty, and result states using shared UI primitives plus feature-specific landmark cards.
 
-The mock landmark dataset lives in `src/features/landmarks/data/mockLandmarks.ts` and includes Tbilisi Old Town places such as Narikala Fortress, Sulfur Baths, Metekhi Church, Peace Bridge, Rike Park, Mother of Georgia, Sameba Cathedral, Freedom Square, Anchiskhati Basilica, Shardeni Street, Mtatsminda Park, and Leghvtakhevi Waterfall.
-
-This flow does **not** call Supabase, OpenAI, or any backend service. When backend data is ready, the local mock array can be replaced behind the landmark feature boundary while keeping the screen and card components largely unchanged.
+The migration seeds Tbilisi Old Town places including Narikala Fortress, Sulfur Baths, Metekhi Church, Peace Bridge, Rike Park, Mother of Georgia, Sameba Cathedral, Freedom Square, Anchiskhati Basilica, Shardeni Street, Mtatsminda Park, and Leghvtakhevi Waterfall. This flow does **not** call OpenAI or implement AI Vision.
