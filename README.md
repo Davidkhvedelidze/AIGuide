@@ -30,6 +30,7 @@ Required public mobile environment variables:
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=
 EXPO_PUBLIC_SUPABASE_ANON_KEY=
+EXPO_PUBLIC_ANALYZE_SCAN_URL=
 ```
 
 Only use the Supabase project URL and anon key in the mobile app. Do not put OpenAI keys, service role keys, or any other backend secrets in Expo public environment variables.
@@ -89,18 +90,20 @@ The initial route set lives in `src/app`:
 - `/ask-guide`
 
 
-## Local MVP Scan Flow
+## Backend MVP Scan Flow
 
-The first working scan flow is intentionally local-only:
+The first working scan flow now uses a secure Supabase Edge Function while intentionally keeping AI provider integration out of scope:
 
 1. Open `/` and tap **Scan what I’m seeing**.
 2. Expo Router navigates to `/camera-scan`.
 3. The camera screen requests Expo Camera permission and then foreground Expo Location permission.
 4. After both permissions are available, tap **Take photo and view result**.
-5. The app captures a photo with Expo Camera, attaches the current latitude and longitude from Expo Location, creates a local mock `AiGuideResult`, and navigates to `/result`.
-6. The result screen displays the mock guide summary, scan coordinates, photo URI, highlights, suggested questions, and mock citation text.
+5. The app captures a JPEG photo with Expo Camera, attaches latitude, longitude, and device locale, then sends `multipart/form-data` to `EXPO_PUBLIC_ANALYZE_SCAN_URL`.
+6. The Edge Function validates the file and coordinates, uploads the image to the private `scan-images` bucket under `scans/{uuid}.jpg`, creates a short-lived signed URL for server-side analysis preparation, calls `get_nearby_landmarks(input_lat, input_lng, radius_meters => 700)`, and chooses the nearest landmark as the mock detected landmark.
+7. The function returns an `AiGuideResult` shaped exactly like the future AI response contract and stores the scan result in `scan_history`.
+8. The result screen displays the backend mock response.
 
-This flow does **not** call OpenAI, Supabase, or any backend service. The mock result is created in `src/features/ai-guide/services/createMockAiGuideResult.ts` so the future production integration can replace local mock generation with a secure backend call without moving secrets into the mobile app.
+This flow does **not** call OpenAI. The signed image URL is generated only inside the Edge Function and is not returned to the mobile app. Future OpenAI Vision or multimodal analysis should be added inside the Edge Function or another secure backend service, never in Expo client code.
 
 ## Supabase Setup
 
@@ -117,6 +120,61 @@ supabase db push
 ```
 
 Alternatively, open the SQL file and run it in the Supabase SQL editor for your project. The migration enables PostGIS, creates `landmarks`, `landmark_translations`, and `scan_history`, creates the generated `location` geography column, adds a GIST location index, and exposes the `get_nearby_landmarks(input_lat, input_lng, radius_meters)` RPC.
+
+
+## Supabase Edge Function Deployment
+
+The scan backend lives in:
+
+```text
+supabase/functions/analyze-scan/index.ts
+supabase/functions/analyze-scan/types.ts
+supabase/migrations/create_scan_images_bucket.sql
+```
+
+Apply database and storage changes first:
+
+```bash
+supabase db push
+```
+
+Set required Edge Function secrets. These are server-side only and must never be copied into Expo public variables:
+
+```bash
+supabase secrets set SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY"
+```
+
+Deploy the function:
+
+```bash
+supabase functions deploy analyze-scan
+```
+
+Set the mobile app endpoint to the deployed function URL:
+
+```bash
+EXPO_PUBLIC_ANALYZE_SCAN_URL=https://YOUR_PROJECT_REF.supabase.co/functions/v1/analyze-scan
+```
+
+The function accepts only `POST` multipart requests and handles `OPTIONS` preflight for CORS. It rejects missing images, invalid coordinates, unsupported image types, and files larger than 5MB with safe JSON error responses.
+
+Required mobile environment variables:
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
+EXPO_PUBLIC_ANALYZE_SCAN_URL=
+```
+
+Required Supabase Edge Function secrets:
+
+```bash
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+Security reminder: OpenAI integration comes later. Do not add OpenAI API keys to the mobile app, and do not expose Supabase service role keys in `EXPO_PUBLIC_*` variables. The mobile app should only call the Edge Function URL for scan analysis.
 
 ## Security Notes
 

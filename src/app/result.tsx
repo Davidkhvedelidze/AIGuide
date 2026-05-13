@@ -10,8 +10,11 @@ const fallbackResult: AiGuideResult = createMockAiGuideResult({
     latitude: 40.75801,
     longitude: -73.9855,
   },
-  generatedAt: new Date().toISOString(),
 });
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
 
 function isAiGuideResult(value: unknown): value is AiGuideResult {
   if (!value || typeof value !== 'object') {
@@ -21,12 +24,19 @@ function isAiGuideResult(value: unknown): value is AiGuideResult {
   const candidate = value as Partial<AiGuideResult>;
 
   return (
-    typeof candidate.id === 'string' &&
-    typeof candidate.title === 'string' &&
-    typeof candidate.summary === 'string' &&
-    Array.isArray(candidate.highlights) &&
-    Array.isArray(candidate.recommendedQuestions) &&
-    typeof candidate.generatedAt === 'string'
+    (typeof candidate.detectedLandmarkId === 'string' || candidate.detectedLandmarkId === null) &&
+    (typeof candidate.detectedLandmarkName === 'string' || candidate.detectedLandmarkName === null) &&
+    typeof candidate.confidence === 'number' &&
+    typeof candidate.isUncertain === 'boolean' &&
+    typeof candidate.shortExplanation === 'string' &&
+    typeof candidate.localGuideStory === 'string' &&
+    isStringArray(candidate.interestingFacts) &&
+    typeof candidate.bestTimeToVisit === 'string' &&
+    Array.isArray(candidate.nearbyPlaces) &&
+    isStringArray(candidate.followUpSuggestions) &&
+    !!candidate.cta &&
+    typeof candidate.cta.title === 'string' &&
+    typeof candidate.cta.message === 'string'
   );
 }
 
@@ -43,61 +53,73 @@ function parseResultParam(param: string | string[] | undefined): AiGuideResult |
   }
 }
 
+function formatConfidence(confidence: number): string {
+  return `${Math.round(confidence * 100)}%`;
+}
+
 export default function ResultScreen() {
   const params = useLocalSearchParams<{ result?: string }>();
   const scanResult = parseResultParam(params.result);
   const result = scanResult ?? fallbackResult;
-  const coordinates = result.scan?.coordinates;
 
   return (
     <ScreenContainer>
       {!scanResult ? (
         <ErrorState
-          title="Showing mock sample"
-          message="No scan result was passed to this screen, so the app is displaying a local sample result. Start from the camera scan flow for a live photo and current coordinates."
+          title="Showing sample result"
+          message="No backend scan result was passed to this screen. Start from the camera scan flow to upload a real photo and receive the secure mock backend response."
         />
       ) : null}
 
-      <Text className="mt-6 text-sm font-semibold uppercase tracking-[3px] text-brand-700">Confidence: {result.confidence}</Text>
-      <Text className="mt-3 text-3xl font-bold text-slate-950">{result.title}</Text>
-      <Text className="mt-4 text-base leading-7 text-slate-600">{result.summary}</Text>
-
-      {coordinates ? (
-        <AppCard className="mt-6">
-          <Text className="text-lg font-semibold text-slate-950">Scan details</Text>
-          <Text className="mt-3 text-base leading-6 text-slate-700">Latitude: {coordinates.latitude.toFixed(6)}</Text>
-          <Text className="mt-2 text-base leading-6 text-slate-700">Longitude: {coordinates.longitude.toFixed(6)}</Text>
-          <Text className="mt-2 text-base leading-6 text-slate-700">Captured: {new Date(result.scan?.capturedAt ?? result.generatedAt).toLocaleString()}</Text>
-          {result.scan?.photoUri ? <Text className="mt-2 text-xs leading-5 text-slate-500">Photo URI: {result.scan.photoUri}</Text> : null}
-        </AppCard>
-      ) : null}
+      <Text className="mt-6 text-sm font-semibold uppercase tracking-[3px] text-brand-700">
+        Confidence: {formatConfidence(result.confidence)} {result.isUncertain ? '• Uncertain' : ''}
+      </Text>
+      <Text className="mt-3 text-3xl font-bold text-slate-950">{result.detectedLandmarkName ?? 'Landmark not detected'}</Text>
+      <Text className="mt-4 text-base leading-7 text-slate-600">{result.shortExplanation}</Text>
 
       <View className="mt-6 gap-4">
         <AppCard>
-          <Text className="text-lg font-semibold text-slate-950">Highlights</Text>
-          {result.highlights.map((highlight) => (
-            <Text key={highlight} className="mt-3 text-base leading-6 text-slate-700">
-              • {highlight}
+          <Text className="text-lg font-semibold text-slate-950">Local guide story</Text>
+          <Text className="mt-3 text-base leading-7 text-slate-700">{result.localGuideStory}</Text>
+        </AppCard>
+
+        <AppCard>
+          <Text className="text-lg font-semibold text-slate-950">Interesting facts</Text>
+          {result.interestingFacts.map((fact) => (
+            <Text key={fact} className="mt-3 text-base leading-6 text-slate-700">
+              • {fact}
             </Text>
           ))}
         </AppCard>
+
+        <AppCard>
+          <Text className="text-lg font-semibold text-slate-950">Best time to visit</Text>
+          <Text className="mt-3 text-base leading-6 text-slate-700">{result.bestTimeToVisit}</Text>
+        </AppCard>
+
+        {result.nearbyPlaces.length > 0 ? (
+          <AppCard>
+            <Text className="text-lg font-semibold text-slate-950">Nearby places</Text>
+            {result.nearbyPlaces.map((place) => (
+              <Text key={place.id} className="mt-3 text-base leading-6 text-slate-700">
+                • {place.name} — {Math.round(place.distanceMeters)} m away
+              </Text>
+            ))}
+          </AppCard>
+        ) : null}
 
         <AppCard>
           <Text className="text-lg font-semibold text-slate-950">Questions to ask next</Text>
-          {result.recommendedQuestions.map((question) => (
-            <Text key={question} className="mt-3 text-base leading-6 text-slate-700">
-              • {question}
+          {result.followUpSuggestions.map((suggestion) => (
+            <Text key={suggestion} className="mt-3 text-base leading-6 text-slate-700">
+              • {suggestion}
             </Text>
           ))}
         </AppCard>
 
         <AppCard>
-          <Text className="text-lg font-semibold text-slate-950">Sources</Text>
-          {result.citations.map((citation) => (
-            <Text key={citation.label} className="mt-3 text-sm leading-5 text-slate-600">
-              • {citation.label}
-            </Text>
-          ))}
+          <Text className="text-lg font-semibold text-slate-950">{result.cta.title}</Text>
+          <Text className="mt-3 text-base leading-6 text-slate-700">{result.cta.message}</Text>
         </AppCard>
       </View>
 

@@ -1,29 +1,27 @@
-import type { GeoCoordinates } from './landmark';
+export type AiGuideCtaAction = 'whatsapp' | 'book_private_guide' | 'custom_itinerary';
 
-export type AiGuideConfidence = 'high' | 'medium' | 'low';
-export type AiGuideScanSource = 'camera' | 'gallery' | 'nearby';
-
-export interface AiGuideCitation {
-  label: string;
-  url?: string;
+export interface AiGuideNearbyPlace {
+  id: string;
+  name: string;
+  distanceMeters: number;
 }
 
-export interface AiGuideScanMetadata {
-  source: AiGuideScanSource;
-  coordinates: GeoCoordinates;
-  capturedAt: string;
-  photoUri?: string;
+export interface AiGuideCta {
+  title: string;
+  message: string;
+  action: AiGuideCtaAction;
 }
 
 export interface AiGuideResult {
-  id: string;
-  landmarkId: string;
-  title: string;
-  summary: string;
-  highlights: string[];
-  recommendedQuestions: string[];
-  confidence: AiGuideConfidence;
-  citations: AiGuideCitation[];
-  generatedAt: string;
-  scan?: AiGuideScanMetadata;
+  detectedLandmarkId: string | null;
+  detectedLandmarkName: string | null;
+  confidence: number;
+  isUncertain: boolean;
+  shortExplanation: string;
+  localGuideStory: string;
+  interestingFacts: string[];
+  bestTimeToVisit: string;
+  nearbyPlaces: AiGuideNearbyPlace[];
+  followUpSuggestions: string[];
+  cta: AiGuideCta;
 }
