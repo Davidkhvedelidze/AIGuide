@@ -1,2 +1,4 @@
-// Public exports for the camera feature module will live here as screens, hooks, services, and API functions are implemented.
-export {};
+export { useCameraPermission } from './hooks/useCameraPermission';
+export { useCameraScan } from './hooks/useCameraScan';
+export type { CameraPermissionStatus, UseCameraPermissionResult } from './hooks/useCameraPermission';
+export type { CameraScanStatus, UseCameraScanResult } from './hooks/useCameraScan';
