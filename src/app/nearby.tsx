@@ -10,7 +10,7 @@ function EmptyNearbyState() {
     <AppCard className="items-start">
       <Text className="text-lg font-semibold text-slate-950">No nearby places found</Text>
       <Text className="mt-2 text-sm leading-6 text-slate-600">
-        We checked the local Tbilisi Old Town mock data, but none of the landmarks are within their nearby radius for your current location or selected category.
+        We checked Supabase for nearby Tbilisi Old Town landmarks, but none are within range for your current location or selected category.
       </Text>
     </AppCard>
   );
@@ -37,14 +37,14 @@ export default function NearbyScreen() {
           <Text className="text-sm font-semibold uppercase tracking-[3px] text-brand-700">Local discovery</Text>
           <Text className="mt-3 text-3xl font-bold text-slate-950">Places near me</Text>
           <Text className="mt-3 text-base leading-7 text-slate-600">
-            Explore nearby Tbilisi Old Town landmarks using local mock data. Supabase and AI integrations are not connected yet.
+            Explore nearby Tbilisi Old Town landmarks from Supabase, ranked by distance from your current location.
           </Text>
         </View>
 
         <CategoryFilter options={categoryOptions} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
 
         {isLoading ? (
-          <LoadingState title="Finding your location" message="We’re requesting foreground location access and checking nearby mock landmarks." />
+          <LoadingState title="Finding your location" message="We’re requesting foreground location access and loading nearby landmarks from Supabase." />
         ) : null}
 
         {!isLoading && isPermissionDenied ? (
@@ -57,7 +57,7 @@ export default function NearbyScreen() {
         ) : null}
 
         {!isLoading && !isPermissionDenied && errorMessage ? (
-          <ErrorState actionLabel="Refresh location" message={errorMessage} onAction={refreshLocation} title="Location unavailable" />
+          <ErrorState actionLabel="Try again" message={errorMessage} onAction={refreshLocation} title="Nearby places unavailable" />
         ) : null}
 
         {!isLoading && !isPermissionDenied && !errorMessage ? (

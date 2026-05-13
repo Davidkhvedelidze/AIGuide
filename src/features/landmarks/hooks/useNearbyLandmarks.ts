@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Location from 'expo-location';
-import { mockLandmarks } from '@/features/landmarks/data/mockLandmarks';
-import { getDistanceMeters } from '@/features/landmarks/utils/getDistanceMeters';
-import type { GeoCoordinates, Landmark, LandmarkCategory } from '@/types';
+import { getNearbyLandmarks } from '@/features/landmarks/api/landmarkApi';
+import type { GeoCoordinates, LandmarkCategory } from '@/types';
+import type { SupabaseNearbyLandmark } from '@/features/landmarks/types/supabase';
 
 export type NearbyCategoryFilter = 'all' | 'historical' | 'church' | 'viewpoint' | 'museum' | 'food' | 'nature';
-export type NearbyLandmarksStatus = 'idle' | 'requesting-permission' | 'locating' | 'ready' | 'permission-denied' | 'error';
+export type NearbyLandmarksStatus = 'idle' | 'requesting-permission' | 'locating' | 'loading-landmarks' | 'ready' | 'permission-denied' | 'error';
 
-export interface NearbyLandmark extends Landmark {
-  distanceMeters: number;
-}
+export type NearbyLandmark = SupabaseNearbyLandmark;
 
 export interface CategoryFilterOption {
   label: string;
@@ -49,6 +47,7 @@ function isSupportedNearbyCategory(category: LandmarkCategory): category is Excl
 export function useNearbyLandmarks(): UseNearbyLandmarksResult {
   const [status, setStatus] = useState<NearbyLandmarksStatus>('idle');
   const [userLocation, setUserLocation] = useState<GeoCoordinates | null>(null);
+  const [landmarks, setLandmarks] = useState<NearbyLandmark[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<NearbyCategoryFilter>('all');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -61,6 +60,7 @@ export function useNearbyLandmarks(): UseNearbyLandmarksResult {
 
       if (!permission.granted) {
         setUserLocation(null);
+        setLandmarks([]);
         setStatus('permission-denied');
         setErrorMessage(LOCATION_PERMISSION_DENIED_MESSAGE);
         return;
@@ -71,13 +71,28 @@ export function useNearbyLandmarks(): UseNearbyLandmarksResult {
         accuracy: Location.Accuracy.Balanced,
       });
 
-      setUserLocation({
+      const nextUserLocation: GeoCoordinates = {
         latitude: currentLocation.coords.latitude,
         longitude: currentLocation.coords.longitude,
-      });
+      };
+
+      setUserLocation(nextUserLocation);
+      setStatus('loading-landmarks');
+
+      const result = await getNearbyLandmarks(nextUserLocation);
+
+      if (!result.success) {
+        setLandmarks([]);
+        setStatus('error');
+        setErrorMessage(result.error.message);
+        return;
+      }
+
+      setLandmarks(result.data);
       setStatus('ready');
     } catch {
       setUserLocation(null);
+      setLandmarks([]);
       setStatus('error');
       setErrorMessage(LOCATION_ERROR_MESSAGE);
     }
@@ -88,22 +103,10 @@ export function useNearbyLandmarks(): UseNearbyLandmarksResult {
   }, [refreshLocation]);
 
   const nearbyLandmarks = useMemo(() => {
-    if (!userLocation) {
-      return [];
-    }
-
-    return mockLandmarks
-      .filter((landmark) => selectedCategory === 'all' || (isSupportedNearbyCategory(landmark.category) && landmark.category === selectedCategory))
-      .map((landmark) => ({
-        ...landmark,
-        distanceMeters: getDistanceMeters(userLocation, {
-          latitude: landmark.latitude,
-          longitude: landmark.longitude,
-        }),
-      }))
-      .filter((landmark) => landmark.distanceMeters <= landmark.radiusMeters)
-      .sort((first, second) => first.distanceMeters - second.distanceMeters);
-  }, [selectedCategory, userLocation]);
+    return landmarks.filter(
+      (landmark: NearbyLandmark) => selectedCategory === 'all' || (isSupportedNearbyCategory(landmark.category) && landmark.category === selectedCategory),
+    );
+  }, [landmarks, selectedCategory]);
 
   return {
     status,
@@ -111,7 +114,7 @@ export function useNearbyLandmarks(): UseNearbyLandmarksResult {
     nearbyLandmarks,
     selectedCategory,
     categoryOptions: nearbyCategoryOptions,
-    isLoading: status === 'requesting-permission' || status === 'locating' || status === 'idle',
+    isLoading: status === 'requesting-permission' || status === 'locating' || status === 'loading-landmarks' || status === 'idle',
     isPermissionDenied: status === 'permission-denied',
     errorMessage,
     setSelectedCategory,

@@ -1,2 +1,10 @@
-// Public exports for the landmarks feature module will live here as screens, hooks, services, and API functions are implemented.
-export {};
+export { getNearbyLandmarks } from './api/landmarkApi';
+export { nearbyCategoryOptions, useNearbyLandmarks } from './hooks/useNearbyLandmarks';
+export type { CategoryFilterOption, NearbyCategoryFilter, NearbyLandmark, NearbyLandmarksStatus, UseNearbyLandmarksResult } from './hooks/useNearbyLandmarks';
+export type {
+  NearbyLandmarkRpcParams,
+  NearbyLandmarkRpcRow,
+  SupabaseDatabase,
+  SupabaseLandmarkRow,
+  SupabaseNearbyLandmark,
+} from './types';
