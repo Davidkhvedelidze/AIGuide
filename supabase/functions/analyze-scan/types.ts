@@ -25,9 +25,12 @@ export interface AiGuideResult {
 export interface NearbyLandmarkRow {
   id: string;
   name: string;
+  category: string;
   short_description: string;
   full_story: string;
   interesting_facts: string[] | null;
+  historical_context: string;
   best_time_to_visit: string;
+  average_visit_duration: string;
   distance_meters: number;
 }

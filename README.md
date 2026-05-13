@@ -90,20 +90,22 @@ The initial route set lives in `src/app`:
 - `/ask-guide`
 
 
-## Backend MVP Scan Flow
+## OpenAI Vision Scan Flow
 
-The first working scan flow now uses a secure Supabase Edge Function while intentionally keeping AI provider integration out of scope:
+The scan flow uses a secure Supabase Edge Function to keep OpenAI and Supabase service-role secrets off the mobile device:
 
 1. Open `/` and tap **Scan what I’m seeing**.
 2. Expo Router navigates to `/camera-scan`.
 3. The camera screen requests Expo Camera permission and then foreground Expo Location permission.
 4. After both permissions are available, tap **Take photo and view result**.
 5. The app captures a JPEG photo with Expo Camera, attaches latitude, longitude, and device locale, then sends `multipart/form-data` to `EXPO_PUBLIC_ANALYZE_SCAN_URL`.
-6. The Edge Function validates the file and coordinates, uploads the image to the private `scan-images` bucket under `scans/{uuid}.jpg`, creates a short-lived signed URL for server-side analysis preparation, calls `get_nearby_landmarks(input_lat, input_lng, radius_meters => 700)`, and chooses the nearest landmark as the mock detected landmark.
-7. The function returns an `AiGuideResult` shaped exactly like the future AI response contract and stores the scan result in `scan_history`.
-8. The result screen displays the backend mock response.
+6. The Edge Function validates the file and coordinates, uploads the image to the private `scan-images` bucket under `scans/{uuid}.jpg`, creates a short-lived signed URL for server-side OpenAI image analysis, and calls `get_nearby_landmarks(input_lat, input_lng, radius_meters => 700)`.
+7. The function sends OpenAI only the signed image URL, GPS location, locale, and the nearest 8 minimized landmark candidates (`id`, `name`, `category`, descriptions, trusted facts/context, visit timing, and distance). It never sends user IDs or unnecessary user data.
+8. OpenAI Responses API returns strict structured JSON compatible with `AiGuideResult`; the Edge Function validates and safety-normalizes it before returning it to the app.
+9. If no nearby landmarks exist, the function skips OpenAI and returns an uncertain no-match result. If OpenAI fails or returns invalid JSON, the function saves and returns a safe low-confidence fallback based only on the nearest trusted location record.
+10. The result screen displays the real AI result or clearly marked uncertain fallback result.
 
-This flow does **not** call OpenAI. The signed image URL is generated only inside the Edge Function and is not returned to the mobile app. Future OpenAI Vision or multimodal analysis should be added inside the Edge Function or another secure backend service, never in Expo client code.
+The signed image URL is generated only inside the Edge Function and is not returned to the mobile app. The permanent storage path is saved in `scan_history.image_path`; temporary signed URLs should be regenerated only when needed.
 
 ## Supabase Setup
 
@@ -130,6 +132,7 @@ The scan backend lives in:
 supabase/functions/analyze-scan/index.ts
 supabase/functions/analyze-scan/types.ts
 supabase/migrations/create_scan_images_bucket.sql
+supabase/migrations/20260513170000_add_scan_history_ai_response.sql
 ```
 
 Apply database and storage changes first:
@@ -143,6 +146,8 @@ Set required Edge Function secrets. These are server-side only and must never be
 ```bash
 supabase secrets set SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY"
+supabase secrets set OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+supabase secrets set OPENAI_VISION_MODEL="gpt-5.1"
 ```
 
 Deploy the function:
@@ -170,15 +175,27 @@ EXPO_PUBLIC_ANALYZE_SCAN_URL=
 Required Supabase Edge Function secrets:
 
 ```bash
+OPENAI_API_KEY=
+OPENAI_VISION_MODEL=
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-Security reminder: OpenAI integration comes later. Do not add OpenAI API keys to the mobile app, and do not expose Supabase service role keys in `EXPO_PUBLIC_*` variables. The mobile app should only call the Edge Function URL for scan analysis.
+Security reminder: never add OpenAI API keys to Expo environment variables or React Native code, and never expose Supabase service role keys in `EXPO_PUBLIC_*` variables. The mobile app should only call `EXPO_PUBLIC_ANALYZE_SCAN_URL` for scan analysis.
+
+## End-to-End Scan Testing
+
+1. Apply migrations with `supabase db push`.
+2. Set Edge Function secrets with `supabase secrets set OPENAI_API_KEY="..." OPENAI_VISION_MODEL="gpt-5.1" SUPABASE_URL="..." SUPABASE_SERVICE_ROLE_KEY="..."`.
+3. Deploy the Edge Function with `supabase functions deploy analyze-scan`.
+4. Set only public Expo values locally: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, and `EXPO_PUBLIC_ANALYZE_SCAN_URL`. Do not set `OPENAI_API_KEY` in `.env`, `.env.local`, EAS public variables, or React Native source.
+5. Run `npm run start`, open the app, grant camera and foreground location permissions, and scan a landmark near seeded Supabase data.
+6. Verify the result is an `AiGuideResult` with confidence, uncertainty messaging when appropriate, nearby places, facts from trusted candidates, and a CTA.
+7. To verify fallback behavior, temporarily unset or rotate `OPENAI_API_KEY` in the Edge Function secrets, redeploy or restart the local function, scan again, and confirm the app receives a low-confidence uncertain result instead of an unhandled error.
 
 ## Security Notes
 
-Do not add OpenAI or other AI provider API keys to the mobile app. AI requests that require secrets should go through a backend service that validates input, retrieves trusted landmark context, calls AI providers, validates responses, and returns safe user-facing results. Supabase service role keys must also stay server-side and must never be placed in `EXPO_PUBLIC_*` variables.
+Do not add OpenAI or other AI provider API keys to the mobile app. AI requests that require secrets go through the Supabase Edge Function, which validates input, retrieves trusted landmark context, calls OpenAI Vision, validates structured output, and returns safe user-facing results. Supabase service role keys must also stay server-side and must never be placed in `EXPO_PUBLIC_*` variables.
 
 ## Architecture Notes
 
@@ -200,4 +217,4 @@ The Nearby Places experience now reads public landmark data from Supabase while 
 6. PostGIS calculates `distance_meters` in the database and sorts landmarks by nearest first; the client uses the returned distance for formatting and does not recalculate database distance.
 7. The app applies the existing category filter on the returned result set and renders loading, permission denied, Supabase error, empty, and result states using shared UI primitives plus feature-specific landmark cards.
 
-The migration seeds Tbilisi Old Town places including Narikala Fortress, Sulfur Baths, Metekhi Church, Peace Bridge, Rike Park, Mother of Georgia, Sameba Cathedral, Freedom Square, Anchiskhati Basilica, Shardeni Street, Mtatsminda Park, and Leghvtakhevi Waterfall. This flow does **not** call OpenAI or implement AI Vision.
+The migration seeds Tbilisi Old Town places including Narikala Fortress, Sulfur Baths, Metekhi Church, Peace Bridge, Rike Park, Mother of Georgia, Sameba Cathedral, Freedom Square, Anchiskhati Basilica, Shardeni Street, Mtatsminda Park, and Leghvtakhevi Waterfall.
