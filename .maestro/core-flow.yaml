@@ -1,0 +1,24 @@
+# Onboarding -> open a place -> save it -> start the audio guide.
+# Set appId to your bundle identifier (see docs/SETUP.md), then: maestro test .maestro/core-flow.yaml
+# NOTE: written against the testIDs in the code but not yet run on a device.
+appId: REPLACE_WITH_YOUR_BUNDLE_ID
+---
+- launchApp:
+    clearState: true
+- tapOn: { id: 'onboarding-next' }
+- tapOn: { id: 'onboarding-next' }
+- tapOn: { id: 'onboarding-next' }
+- tapOn: { id: 'onboarding-skip' }
+- tapOn: { id: 'tab-map' }
+- scrollUntilVisible:
+    element: { id: 'place-narikala' }
+- tapOn: { id: 'place-narikala' }
+- assertVisible: { id: 'listen-now' }
+- tapOn: { id: 'save-narikala' }
+- tapOn: { id: 'listen-now' }
+- assertVisible: { id: 'play-toggle' }
+- back
+- back
+- tapOn: { id: 'tab-profile' }
+- tapOn: { id: 'open-saved' }
+- assertVisible: { id: 'place-narikala' }
