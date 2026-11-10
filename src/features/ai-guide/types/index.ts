@@ -1,1 +1,1 @@
-export type { AiGuideResult } from '@/types';
+export type { AiGuideCta, AiGuideCtaAction, AiGuideNearbyPlace, AiGuideResult } from '@/types';
