@@ -1,74 +1,38 @@
-# AI Guide
+# AI Tour Guide
 
-AI Guide is a new React Native application built with Expo.
+Point your camera at a landmark in Tbilisi and hear its story. Built with Expo (React Native) and Supabase.
 
-## Tech Stack
+The app runs out of the box in **demo mode**: bundled places, no backend, the phone's voice reads the stories. Connect Supabase to turn on real recognition, accounts and narrated audio.
 
-- React Native
-- Expo
-- TypeScript
-- Node.js
-
-## Getting Started
-
-Install dependencies:
+## Run it
 
 ```bash
 npm install
+npm run start        # then press i / a, or scan the QR code with Expo Go
+npm run web          # browser preview (the map is a schematic there)
 ```
 
-Start the Expo development server:
+## Checks
 
 ```bash
-npm run start
-```
-
-Common Expo targets:
-
-```bash
-npm run ios
-npm run android
-npm run web
-```
-
-## Project Structure
-
-The app has not been scaffolded yet. A typical Expo structure for this project should look like:
-
-```text
-app/
-  _layout.tsx
-  index.tsx
-assets/
-components/
-constants/
-hooks/
-package.json
-app.json
-tsconfig.json
-```
-
-Prefer Expo Router for navigation unless the project later chooses a different routing approach.
-
-## Development Notes
-
-- Keep screens small and compose them from reusable components.
-- Put shared UI in `components/`.
-- Put route-level screens in `app/` when using Expo Router.
-- Keep API/client logic outside UI components when it grows beyond simple calls.
-- Use TypeScript for new files.
-
-## Useful Commands
-
-After the project is scaffolded, keep these commands available in `package.json`:
-
-```bash
-npm run start
-npm run lint
-npm run test
 npm run typecheck
+npm run lint
+npm test
+npm run content:validate
 ```
+
+## Where things are
+
+- `docs/PRD.md`: what the product is and is not
+- `docs/SETUP.md`: connecting Supabase, the model provider, maps, purchases
+- `docs/RELEASE.md`: release checklist and store listing drafts
+- `CLAUDE.md`: architecture and rules for AI coding agents
+- `design/`: the original mockups
 
 ## Status
 
-Initial repository setup.
+Working in demo mode: onboarding, camera scan flow, place pages, audio guide with transcript, map and nearby list, saved places, collections, history, profile, settings (English/Georgian), paywall screen.
+
+Written but not yet exercised against live services: Supabase schema and edge functions (`scan`, `tts`, `revenuecat-webhook`), library sync, content import and review scripts. `docs/SETUP.md` lists what to connect and how to test each piece.
+
+Content: 8 Tbilisi places, each with sourced facts, all still marked as drafts awaiting editorial review. No photos yet (real, licensed photos only).
