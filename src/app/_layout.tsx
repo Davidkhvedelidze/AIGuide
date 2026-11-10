@@ -1,27 +1,48 @@
-import '@/styles/global.css';
-
-import { Stack } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-export default function RootLayout(): JSX.Element {
+import { startSync } from '@/data/sync';
+import { useApp } from '@/store/app';
+import { colors } from '@/theme/tokens';
+
+void SplashScreen.preventAutoHideAsync();
+
+const navTheme = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: colors.bg, card: colors.bg, text: colors.text, border: colors.border, primary: colors.gold },
+};
+
+export default function RootLayout() {
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 1 } } }));
+  const hydrated = useApp((s) => s.hydrated);
+
+  useEffect(() => {
+    startSync();
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) void SplashScreen.hideAsync();
+  }, [hydrated]);
+
+  if (!hydrated) return null;
+
   return (
-    <>
-      <Stack
-        screenOptions={{
-          headerShadowVisible: false,
-          headerStyle: { backgroundColor: '#F8FAFC' },
-          headerTitleStyle: { color: '#0F172A', fontWeight: '700' },
-          contentStyle: { backgroundColor: '#F8FAFC' },
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding" options={{ title: 'Welcome' }} />
-        <Stack.Screen name="camera-scan" options={{ title: 'Scan Landmark' }} />
-        <Stack.Screen name="result" options={{ title: 'Scan Result' }} />
-        <Stack.Screen name="nearby" options={{ title: 'Nearby' }} />
-        <Stack.Screen name="ask-guide" options={{ title: 'Ask Guide' }} />
-      </Stack>
-      <StatusBar style="dark" />
-    </>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={navTheme}>
+          <StatusBar style="light" />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+            <Stack.Screen name="player" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+          </Stack>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

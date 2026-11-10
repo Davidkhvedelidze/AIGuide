@@ -52,3 +52,17 @@ For UI work, start Expo and verify the target screen in the simulator, device, o
 - Do not overwrite user changes.
 - Keep edits scoped to the requested task.
 - Do not commit unless explicitly asked.
+
+## Expo has changed: do not trust your training data
+
+Expo ships breaking changes every SDK release. This project is on SDK 58 (React Native 0.88). Before writing code that touches an Expo, EAS or React Native API:
+
+1. Read the major version of the `expo` package in `package.json`.
+2. Check the installed type definitions in `node_modules/<package>/build/*.d.ts`, or the versioned docs at `https://docs.expo.dev/versions/v<major>.0.0/`.
+3. Install packages with `npx expo install <package>` so versions match the SDK.
+
+Things that already differ from older tutorials in this codebase: `Tabs` comes from `expo-router/js-tabs`, custom tab bars receive `{ state, emitter, navigateToTab }`, audio is `expo-audio` (not `expo-av`), and image resizing uses `ImageManipulator.manipulate(...).renderAsync()`.
+
+## Project rules
+
+See `CLAUDE.md` for the architecture, the content rule (never invent facts about places) and the commands to run before finishing a task.
