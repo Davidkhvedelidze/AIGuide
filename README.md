@@ -70,7 +70,6 @@ The initial route set lives in `src/app`:
 - `/nearby`
 - `/ask-guide`
 
-
 ## Local MVP Scan Flow
 
 The first working scan flow is intentionally local-only:
@@ -96,6 +95,23 @@ Do not add OpenAI or other AI provider API keys to the mobile app. AI requests t
 - Shared domain models live in `src/types` and are re-exported from feature type modules when useful.
 - Network calls should use `src/lib/services/http.ts` instead of direct `fetch` calls in UI components.
 
+## Product UX Direction
+
+The app is being redesigned into a premium camera-first AI travel guide experience.
+
+Primary user flow:
+
+```text
+First launch
+→ Onboarding
+→ Get Started
+→ Camera and location permission explanation
+→ Guide tab
+→ Tap to identify
+→ AI recognition result
+→ Short version / Tell me / More details
+→ Explore nearby or save discovery
+
 ## Nearby Places Mock Flow
 
 The Nearby Places experience is implemented as a local-only flow so the app can validate permissions, distance ranking, filters, and UI states before Supabase is connected.
@@ -110,3 +126,27 @@ The Nearby Places experience is implemented as a local-only flow so the app can 
 The mock landmark dataset lives in `src/features/landmarks/data/mockLandmarks.ts` and includes Tbilisi Old Town places such as Narikala Fortress, Sulfur Baths, Metekhi Church, Peace Bridge, Rike Park, Mother of Georgia, Sameba Cathedral, Freedom Square, Anchiskhati Basilica, Shardeni Street, Mtatsminda Park, and Leghvtakhevi Waterfall.
 
 This flow does **not** call Supabase, OpenAI, or any backend service. When backend data is ready, the local mock array can be replaced behind the landmark feature boundary while keeping the screen and card components largely unchanged.
+```
+
+## The main app should use four bottom tabs:
+
+Guide
+History
+Map
+Profile
+
+## Important UX rules:
+
+The first screen should be onboarding with a clear Get Started CTA.
+Bottom tabs should not appear on onboarding or permission screens.
+After onboarding and permissions, the user should land on the Guide tab.
+The Guide tab is the main camera-first experience.
+The camera screen should stay uncluttered and immersive.
+Recognition should use clear states: idle, analyzing, result, low-confidence, and error.
+AI copy should be helpful and humble, for example: “I think this is…” or “This might be…”.
+UI text should be English only at this stage.
+Avoid hardcoded static data inside UI components.
+Prefer feature services, hooks, and typed data models.
+Local mocks are allowed only behind feature boundaries until backend services are connected.
+
+docs/ai-tour-guide-ux.md

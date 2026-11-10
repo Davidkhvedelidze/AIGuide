@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { AppButton } from './AppButton';
+import { SecondaryButton } from './SecondaryButton';
 
 interface ErrorStateProps {
   title?: string;
@@ -10,10 +10,10 @@ interface ErrorStateProps {
 
 export function ErrorState({ title = 'Something went wrong', message = 'Please try again in a moment.', actionLabel = 'Try again', onAction }: ErrorStateProps) {
   return (
-    <View accessibilityRole="alert" className="rounded-card border border-red-100 bg-red-50 p-5">
-      <Text className="text-lg font-semibold text-red-950">{title}</Text>
-      <Text className="mt-2 text-sm leading-5 text-red-800">{message}</Text>
-      {onAction ? <AppButton className="mt-4" onPress={onAction} title={actionLabel} variant="secondary" /> : null}
+    <View accessibilityRole="alert" className="rounded-3xl border p-5" style={{ borderColor: 'rgba(248,113,113,0.28)', backgroundColor: 'rgba(127,29,29,0.22)' }}>
+      <Text className="text-lg font-semibold text-tour-text">{title}</Text>
+      <Text className="mt-2 text-sm leading-5 text-tour-muted">{message}</Text>
+      {onAction ? <SecondaryButton className="mt-4" onPress={onAction} title={actionLabel} /> : null}
     </View>
   );
 }
